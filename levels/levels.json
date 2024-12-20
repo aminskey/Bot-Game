@@ -1,0 +1,9 @@
+{
+  "levels": [
+    {
+      "name": "test_level",
+      "levelData": "testLevel.json",
+      "tilesheet": "tilesheet.json"
+    }
+  ]
+}

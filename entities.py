@@ -6,6 +6,12 @@ import groups as gp
 from variables import *
 from pygame.locals import *
 
+class CollidePoint(pygame.sprite.Sprite):
+    def __init__(self, size):
+        super().__init__()
+        self.image = pygame.Surface(size)
+        self.rect = self.image.get_rect()
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, _type, name, animSpeed, scale=1, loop=True):
         super().__init__()
@@ -34,6 +40,10 @@ class Entity(pygame.sprite.Sprite):
         self.image = self.frames[0]
         self.rect = self.image.get_rect()
 
+        self.front = CollidePoint((4, self.image.get_height() // 3))
+        self.back = CollidePoint((4, self.image.get_height() // 3))
+        self.bottom = CollidePoint((self.image.get_width() // 3, 4))
+
     def copy(self):
         return Entity(self.type, self.name, self.animSpeed, self.scale, self.loop)
 
@@ -55,6 +65,14 @@ class Entity(pygame.sprite.Sprite):
             gp.visibleEntities.add(self)
         else:
             gp.visibleEntities.remove(self)
+
+        if pygame.sprite.spritecollideany(self.front, gp.visibleTilesGrp):
+            self.vel.x *= -1
+            self.rect.centerx -= self.front.image.get_width() * abs(self.vel.x)
+
+        if pygame.sprite.spritecollideany(self.back, gp.visibleTilesGrp):
+            self.vel.x *= -1
+            self.rect.centerx += self.back.image.get_width() * abs(self.vel.x)
 
 class Tube(Entity):
     def __init__(self, _type, animSpeed, scale):
@@ -114,21 +132,12 @@ class Lift(Entity2):
 
 tubeBroken = Entity("powerUps", "tubeBroken", 0.5, loop=False)
 
-class CollidePoint(pygame.sprite.Sprite):
-    def __init__(self, size):
-        super().__init__()
-        self.image = pygame.Surface(size)
-        self.rect = self.image.get_rect()
-
 class Enemy(Entity):
     def __init__(self, _type, animSpeed, scale):
         super().__init__("hostile", _type, animSpeed, scale)
         self.hp = 12
         self.acc = pygame.math.Vector2(0, 1)
 
-        self.front = CollidePoint((4, self.image.get_height()//3))
-        self.back = CollidePoint((4, self.image.get_height()//3))
-        self.bottom = CollidePoint((self.image.get_width()//3, 4))
         self.isJumping = False
         self.doJump = False
         self.damage = 5
@@ -158,6 +167,7 @@ class Enemy(Entity):
 
     def update(self, vec, win):
         super().update(vec, win)
+
         self.update_cp()
         if self in gp.visibleEntities.sprites():
             if self.doJump:
@@ -211,13 +221,6 @@ class Bomb(Enemy):
                 tmp.add(gp.entityGroup, gp.allEntities, gp.visibleEntities)
                 self.kill()
                 return
-
-        if pygame.sprite.spritecollideany(self.front, gp.visibleTilesGrp):
-            self.rect.centerx -= self.front.image.get_width()
-            self.vel.x *= -1
-        if pygame.sprite.spritecollideany(self.back, gp.visibleTilesGrp):
-            self.rect.centerx += self.back.image.get_width()
-            self.vel.x *= -1
 
 class Player(Entity):
     def __init__(self, name, scale=1):
@@ -299,21 +302,31 @@ class Player(Entity):
         start = gp.tileGroup.sprites()[0]
         end = gp.tileGroup.sprites()[-1]
 
+        # if camera is restricted to player position
         if not self.__freeMove:
+            # follow player position, by moving the tiles backwards
             vec.x = -self.vel.x
+
+            #if reached end or start of level
             if start.rect.x > 0 or end.rect.x < self.screen.get_width():
+                # enable free movement i.e., don't restrict camera
                 self.__freeMove = True
                 vec.x = vec.y = 0
+
+            # if the player is not in the center of the screen
             elif not ut.isInBounds(self.rect.centerx, 10, self.screen.get_width() // 4, self.screen.get_width() * 3 // 4):
+                # move the player in the middle
                 diff = self.rect.centerx - self.screen.get_width()//2
-                vec.x = -diff/4
+                vec.x = diff/abs(diff) * 0.25
+                self.vel.x = -vec.x * 0.25
         else:
+            # update the player's position
             self.rect.centerx += self.vel.x
+
+            # if the player is leaving the screen, then lock camera
             if ut.isInBounds(self.rect.centerx, self.rect.width, self.screen.get_width()//2-20, self.screen.get_width()//2 + 20):
                 self.__freeMove = False
                 vec.x = -self.vel.x
-
-
 
         if not self.__fallctrl:
             if not ut.isInBounds(self.rect.centery, 0, self.screen.get_height()//6, self.screen.get_height()):

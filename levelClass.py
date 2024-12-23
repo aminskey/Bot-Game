@@ -4,3 +4,4 @@ class Level:
         self.name = data["name"]
         self.levelData = data["levelData"]
         self.tilesheet = data["tilesheet"]
+        self.bg = data["background"]

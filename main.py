@@ -11,6 +11,8 @@ from pygame.locals import *
 from variables import *
 from entities import Lift, Player
 from levelClass import Level
+from simpleImage import SimpleImage
+from time import time
 
 clock = pygame.time.Clock()
 
@@ -24,7 +26,11 @@ def main(level):
     tileset = levelGen.generateTileSet(f"levels/{level.tilesheet}")
     levelGen.entityDict[45] = [Lift, (45, tileset)]
 
-    spawnpoint = levelGen.generateLevel(f"levels/{level.levelData}", tileset)
+    spawnpoint, finishLine = levelGen.generateLevel(f"levels/{level.levelData}", tileset)
+
+    bg = SimpleImage(f"levels/{level.bg}")
+    bg.rescale(screen.get_height()/(bg.image.get_height()/2))
+    bg.image.set_alpha(100)
 
     origo = pygame.math.Vector2(0, 0)
     p1 = Player("red")
@@ -45,12 +51,22 @@ def main(level):
                     quit()
                 break
 
+        if finishLine.completed:
+            for sprite in gp.allSprites.sprites():
+                sprite.kill()
+            return
+
         gp.tileGroup.update(origo, screen)
         gp.entityGroup.update(origo, screen)
         p1.cntrlCamera(origo)
         p1.update()
 
+        bg.rect.center += origo * 0.25
+        if bg.rect.y > 0 or bg.rect.bottomleft[1] < screen.get_height():
+            bg.rect.y = 0
+
         screen.fill(BLACK)
+        screen.blit(bg.image, bg.rect)
         gp.tile2grp.draw(screen)
         gp.visibleEntities.draw(screen)
         screen.blit(p1.image, p1.rect)

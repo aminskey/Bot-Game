@@ -24,6 +24,8 @@ class Tile(pygame.sprite.Sprite):
         self.image = pygame.image.frombuffer(buff.tobytes(), tilesize, "BGR")
         self.image.set_colorkey(self.alpha)
         self.rect = self.image.get_rect()
+
+        gp.allSprites.add(self)
     def update(self, vec, win):
         self.rect.center += vec
         if self.id >= 1:
@@ -37,7 +39,6 @@ class Tile(pygame.sprite.Sprite):
                     gp.visibleTilesGrp.remove(self)
                 else:
                     gp.tile2grp.remove(self)
-
 
     def copy(tile):
         return Tile(tile.id, tile.img, tile.off, tile.tilesize, tile.alpha)
@@ -68,13 +69,15 @@ entityDict = {
     3: [ent.Enemy, ("ball", 0.25, 0.25)],
     4: [ent.Tube, ("coin", 5/FPS, 0.75)],
     5: [ent.Tube, ("healthUp", 0.125, 0.75)],
-    41: [ent.Entity, ("misc", "portal", 0.75, 1.5)]
+    41: [ent.FinishLine, (0.75, 1.5)]
 }
 
 
 def generateLevel(file, tileset):
 
     spawnpoint = (0, 0)
+    finishLine = None
+
     buff = ut.readData(f"{file}")
     for layer in buff["layers"]:
         for chunk in layer["chunks"]:
@@ -91,6 +94,8 @@ def generateLevel(file, tileset):
                     entity.rect.bottomleft = (x*32, y*32 + 32)
                     if hasattr(entity, "startPoint"):
                         entity.startPoint = (x*32)
+                    if isinstance(entity, ent.FinishLine):
+                        finishLine = entity
                     gp.entityGroup.add(entity)
                     gp.allEntities.add(entity)
                 else:
@@ -108,4 +113,4 @@ def generateLevel(file, tileset):
                 if x >= (width + startx):
                     x = startx
                     y += 1
-    return spawnpoint
+    return (spawnpoint, finishLine)

@@ -44,6 +44,8 @@ class Entity(pygame.sprite.Sprite):
         self.back = CollidePoint((4, self.image.get_height() // 3))
         self.bottom = CollidePoint((self.image.get_width() // 3, 4))
 
+        gp.allSprites.add(self)
+
     def copy(self):
         return Entity(self.type, self.name, self.animSpeed, self.scale, self.loop)
 
@@ -231,9 +233,9 @@ class Player(Entity):
         self.acc = pygame.math.Vector2(0, 1)
         self.vel = pygame.math.Vector2(0, 0)
 
-        self.frontpoint = CollidePoint((5, self.image.get_height() // 2 - 10))
-        self.backpoint = CollidePoint((5, self.image.get_height() // 2 - 10))
-        self.underpoint = CollidePoint((self.image.get_width()//2, 5))
+        self.front = CollidePoint((5, self.image.get_height() // 2 - 10))
+        self.back = CollidePoint((5, self.image.get_height() // 2 - 10))
+        self.under = CollidePoint((self.image.get_width() // 2, 5))
         self.top = CollidePoint((self.image.get_width()//2, 5))
 
         self.jumping = False
@@ -256,7 +258,7 @@ class Player(Entity):
         return Player(self.name, self.scale)
 
     def gravity(self):
-        if not pygame.sprite.spritecollideany(self.underpoint, gp.visibleTilesGrp):
+        if not pygame.sprite.spritecollideany(self.under, gp.visibleTilesGrp):
             if self.vel.y < maxVel:
                 self.vel.y += self.acc.y
         elif not self.jumping:
@@ -273,10 +275,10 @@ class Player(Entity):
         k = pygame.key.get_pressed()
 
         if k[K_LEFT]:
-            if not pygame.sprite.spritecollideany(self.backpoint, gp.visibleTilesGrp):
+            if not pygame.sprite.spritecollideany(self.back, gp.visibleTilesGrp):
                 self.vel.x = -self.speed
         if k[K_RIGHT]:
-            if not pygame.sprite.spritecollideany(self.frontpoint, gp.visibleTilesGrp):
+            if not pygame.sprite.spritecollideany(self.front, gp.visibleTilesGrp):
                 self.vel.x = self.speed
         if k[K_SPACE]:
             if not self.jumping:
@@ -290,9 +292,9 @@ class Player(Entity):
         self.vel = pygame.math.Vector2(0, 0)
 
     def update_cp(self):
-        self.frontpoint.rect.topleft = self.rect.midright
-        self.backpoint.rect.topright = self.rect.midleft
-        self.underpoint.rect.midtop = self.rect.midbottom
+        self.front.rect.topleft = self.rect.midright
+        self.back.rect.topright = self.rect.midleft
+        self.under.rect.midtop = self.rect.midbottom
         self.top.rect.midbottom = self.rect.midtop
 
     def cntrlCamera(self, vec):
@@ -374,8 +376,8 @@ class Player(Entity):
         else:
             self.image = tmp
 
-        if pygame.sprite.spritecollideany(self.underpoint, gp.enemyGroup):
-            coll = pygame.sprite.spritecollideany(self.underpoint, gp.enemyGroup)
+        if pygame.sprite.spritecollideany(self.under, gp.enemyGroup):
+            coll = pygame.sprite.spritecollideany(self.under, gp.enemyGroup)
             if hasattr(coll, "hp"):
                 coll.hp -= 20
             self.vel.y = -self.jumpPower*2
@@ -397,3 +399,28 @@ class Player(Entity):
 
         self.fric()
         self.update_cp()
+
+
+#41: [ent.Entity, ("misc", "portal", 0.75, 1.5)]
+class Portal(Entity):
+    def __init__(self, animSpeed, scale):
+        super().__init__("misc", "portal", animSpeed, scale)
+        self.inContact = False
+        self.rect.update((self.image.get_width()//10, 0), (self.image.get_width() * 9//20, self.image.get_height()))
+
+    def update(self, vec, win):
+        super().update(vec, win)
+
+        if pygame.sprite.spritecollideany(self, gp.playerGroup):
+            self.inContact = True
+        else:
+            self.inContact = False
+
+class FinishLine(Portal):
+    def __init__(self, animSpeed, scale):
+        super().__init__(animSpeed, scale)
+        self.completed = False
+
+    def update(self, vec, win):
+        super().update(vec, win)
+        self.completed = True if self.inContact else False

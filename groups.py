@@ -1,5 +1,6 @@
 import pygame
 
+allSprites = pygame.sprite.Group()
 tileGroup = pygame.sprite.Group()
 tile2grp = pygame.sprite.Group()
 entityGroup = pygame.sprite.Group()

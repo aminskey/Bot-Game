@@ -5,3 +5,4 @@ class Level:
         self.levelData = data["levelData"]
         self.tilesheet = data["tilesheet"]
         self.bg = data["background"]
+        self.bgm = data["bgm"]

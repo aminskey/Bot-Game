@@ -2,9 +2,10 @@
   "levels": [
     {
       "name": "test_level",
-      "levelData": "testLevel.json",
-      "tilesheet": "tilesheet.json",
-      "background": "bg.png"
+      "levelData": "levels/testLevel.json",
+      "tilesheet": "levels/tilesheet.json",
+      "background": "backgrounds/bg.png",
+      "bgm": "BGM/level1.ogg"
     }
   ]
 }

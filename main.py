@@ -1,4 +1,5 @@
 import random
+from queue import Full
 
 import pygame
 import json
@@ -179,7 +180,7 @@ def main(level):
     bg.image.set_alpha(100)
 
     origo = pygame.math.Vector2(0, 0)
-    p1 = Player("red")
+    p1 = Player("blue")
     p1.rect.midbottom = spawnpoint
     p1.screen = screen
 

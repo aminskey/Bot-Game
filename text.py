@@ -21,6 +21,7 @@ class Text(pygame.sprite.Sprite):
             self.image.blit(img, (0, 0))
         else:
             self.image = img.copy()
+
         self.rect = self.image.get_rect()
         self.color = textColor
         self.rect.center = pos
